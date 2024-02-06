@@ -2,6 +2,7 @@ package com.dasgupta.jobmagnetserver;
 
 import com.dasgupta.jobmagnetserver.job.Job;
 import com.dasgupta.jobmagnetserver.job.JobRepository;
+import net.datafaker.Faker;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -9,30 +10,36 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
 public class JobMagnetServerApplication {
+    int NUM_RECORDS = 10;
 
-	public static void main(String[] args) {
-		SpringApplication.run(JobMagnetServerApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(JobMagnetServerApplication.class, args);
+    }
 
-	@Bean
-	@Profile("development")
-	public CommandLineRunner seedData(JobRepository jobRepository) {
-		return args -> {
-			if (jobRepository.count() == 0) {
-				Job job1 = new Job();
-				job1.setTitle("Software Engineer");
-				job1.setDatePosted(new Date());
+    @Bean
+    @Profile("development")
+    public CommandLineRunner seedData(JobRepository jobRepository) {
+        Faker faker = new Faker();
+        return args -> {
+            createJobs(faker, jobRepository);
+        };
+    }
 
-				Job job2 = new Job();
-				job2.setTitle("Data Scientist");
-				job2.setDatePosted(new Date());
+    private void createJobs(Faker faker, JobRepository jobRepository) {
+        if (jobRepository.count() == NUM_RECORDS) {
+            return;
+        }
 
-				jobRepository.save(job1);
-				jobRepository.save(job2);
-			}
-		};
-	}
+        for (int i = 0; i < NUM_RECORDS; ++i) {
+            Job job = new Job();
+            job.setTitle(faker.company().profession());
+            job.setDatePosted(faker.date().past(14, TimeUnit.DAYS));
+
+            jobRepository.save(job);
+        }
+    }
 }
